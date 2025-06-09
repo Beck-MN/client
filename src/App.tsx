@@ -21,7 +21,8 @@ const MOODS = [
   '🤔 Thoughtful',
   '😰 Anxious',
   '🥱 Tired',
-  '🤩 Excited'
+  '🤩 Excited',
+  '🤑 Middle Class'
 ];
 
 const PRIORITIES = {
