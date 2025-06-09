@@ -1,87 +1,76 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
-interface Thought {
-  id: number;
-  content: string;
-  type: 'thought' | 'complaint';
-  severity?: number;
-  feeling: string;
+interface Complaint {
+  _id: string;
+  title: string;
+  description: string;
+  status: 'pending' | 'in-progress' | 'resolved';
+  priority: 'low' | 'medium' | 'high';
   createdAt: string;
 }
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-const FEELINGS = [
-  '😊 Happy',
-  '😢 Sad',
-  '😡 Angry',
-  '😌 Calm',
-  '🤔 Thoughtful',
-  '😰 Anxious',
-  '🥱 Tired',
-  '🤩 Excited'
-];
-
 function App() {
-  const [thoughts, setThoughts] = useState<Thought[]>([]);
-  const [content, setContent] = useState('');
-  const [type, setType] = useState<'thought' | 'complaint'>('thought');
-  const [severity, setSeverity] = useState<number>(1);
-  const [feeling, setFeeling] = useState<string>(FEELINGS[0]);
+  const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('low');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchThoughts();
+    fetchComplaints();
   }, []);
 
-  const fetchThoughts = async () => {
+  const fetchComplaints = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/thoughts`);
+      const response = await fetch(`${API_URL}/api/complaints`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      setThoughts(data.thoughts);
+      setComplaints(data);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching thoughts:', error);
-      setError('Failed to load thoughts');
+      console.error('Error fetching complaints:', error);
+      setError('Failed to load complaints');
       setLoading(false);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!content.trim()) return;
+    if (!title.trim() || !description.trim()) return;
 
     try {
-      const thoughtData = {
-        content,
-        type,
-        feeling,
-        ...(type === 'complaint' && { severity })
+      const complaintData = {
+        title,
+        description,
+        priority,
+        status: 'pending'
       };
 
-      const response = await fetch(`${API_URL}/api/thoughts`, {
+      const response = await fetch(`${API_URL}/api/complaints`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(thoughtData),
+        body: JSON.stringify(complaintData),
       });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      setContent('');
-      setSeverity(1);
-      fetchThoughts();
+      setTitle('');
+      setDescription('');
+      setPriority('low');
+      fetchComplaints();
     } catch (error) {
-      console.error('Error submitting thought:', error);
-      setError('Failed to submit thought');
+      console.error('Error submitting complaint:', error);
+      setError('Failed to submit complaint');
     }
   };
 
@@ -96,95 +85,77 @@ function App() {
   return (
     <div className="app-container">
       <header>
-        <h1>Jane's Daily Thoughts ❤️</h1>
+        <h1>Complaint Portal</h1>
       </header>
 
       <main>
         <section className="form-section">
-          <h2>Share Your Thoughts</h2>
+          <h2>Submit a Complaint</h2>
           <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label>
-                Type:
-                <select
-                  value={type}
-                  onChange={(e) => setType(e.target.value as 'thought' | 'complaint')}
-                >
-                  <option value="thought">Thought</option>
-                  <option value="complaint">Complaint</option>
-                </select>
+                Title:
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Enter complaint title"
+                  required
+                />
               </label>
             </div>
-
-            {type === 'complaint' && (
-              <div className="form-group">
-                <label>
-                  Severity:
-                  <div className="severity-selector">
-                    {[1, 2, 3, 4, 5].map((level) => (
-                      <button
-                        key={level}
-                        type="button"
-                        className={`severity-button ${severity === level ? 'active' : ''}`}
-                        onClick={() => setSeverity(level)}
-                      >
-                        {'⚡'.repeat(level)}
-                      </button>
-                    ))}
-                  </div>
-                </label>
-              </div>
-            )}
 
             <div className="form-group">
               <label>
-                Feeling:
+                Priority:
                 <select
-                  value={feeling}
-                  onChange={(e) => setFeeling(e.target.value)}
-                  className="feeling-selector"
+                  value={priority}
+                  onChange={(e) => setPriority(e.target.value as 'low' | 'medium' | 'high')}
                 >
-                  {FEELINGS.map((feel) => (
-                    <option key={feel} value={feel}>
-                      {feel}
-                    </option>
-                  ))}
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
                 </select>
               </label>
             </div>
 
             <div className="form-group">
-              <textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="What's on your mind? (I love you and miss you)"
-                rows={4}
-                required
-              />
+              <label>
+                Description:
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Describe your complaint"
+                  rows={4}
+                  required
+                />
+              </label>
             </div>
-            <button type="submit">Submit</button>
+            <button type="submit">Submit Complaint</button>
           </form>
         </section>
 
-        <section className="thoughts-section">
-          <h2>Previous Entries</h2>
-          <div className="thoughts-list">
-            {thoughts.length === 0 ? (
-              <p>No thoughts yet. Be the first to share!</p>
+        <section className="complaints-section">
+          <h2>All Complaints</h2>
+          <div className="complaints-list">
+            {complaints.length === 0 ? (
+              <p>No complaints yet.</p>
             ) : (
-              thoughts.map((thought) => (
-                <div key={thought.id} className={`thought-card ${thought.type}`}>
-                  <div className="thought-header">
-                    <span className="thought-feeling">{thought.feeling}</span>
-                    {thought.type === 'complaint' && (
-                      <span className="thought-severity">{'⚡'.repeat(thought.severity || 0)}</span>
-                    )}
+              complaints.map((complaint) => (
+                <div key={complaint._id} className={`complaint-card ${complaint.priority}`}>
+                  <div className="complaint-header">
+                    <h3>{complaint.title}</h3>
+                    <span className={`status ${complaint.status}`}>
+                      {complaint.status}
+                    </span>
                   </div>
-                  <p className="thought-content">{thought.content}</p>
-                  <div className="thought-meta">
-                    <span className="thought-type">{thought.type}</span>
-                    <span className="thought-date">
-                      {new Date(thought.createdAt).toLocaleDateString()}
+                  <p className="complaint-description">{complaint.description}</p>
+                  <div className="complaint-meta">
+                    <span className={`priority ${complaint.priority}`}>
+                      Priority: {complaint.priority}
+                    </span>
+                    <span className="date">
+                      {new Date(complaint.createdAt).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
