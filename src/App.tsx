@@ -22,6 +22,7 @@ const MOODS = [
   '😰 Anxious',
   '🥱 Tired',
   '🤩 Excited',
+  '👯 I Miss My Boyfriend',
   '🤑 Middle Class'
 ];
 
